@@ -24,5 +24,6 @@ func SetupRoutes(r *gin.Engine) {
 
 	registerList := api.Group("/registrolista")
 	registerList.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop", "worker"))
-	protected.POST("", controllers.RegisterList)
+	registerList.POST("", controllers.RegisterList)
+
 }

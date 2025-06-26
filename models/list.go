@@ -23,9 +23,12 @@ type List struct {
 	UtilesQuitados       map[string]int             `json:"utiles_quitados,omitempty" bson:"utilesQuitados,omitempty"`
 	DeseaQuitar          bool                       `json:"desea_quitar,omitempty" bson:"deseaQuitar,omitempty"`
 	Faltantes            map[string]int             `json:"faltantes,omitempty" bson:"faltantes,omitempty"`
-	EtiquetasId          primitive.ObjectID         `json:"etiquetas_id,omitempty" bson:"etiquetasId,omitempty"`
+	EtiquetasPersonaje   string                     `json:"etiquetas_id,omitempty" bson:"etiquetasId,omitempty"`
 	StatusEtiquetas      string                     `json:"status_etiquetas,omitempty" bson:"statusEtiquetas,omitempty"`
-	EncargadoEtiquetasID primitive.ObjectID         `json:"encargado_etiquetas_id,omitempty" bson:"encargadoEtiquetasId,omitempty"`
+	EtiquetasGrandes     bool                       `json:"etiquetas_grandes,omitempty" bson:"etiquetas_grandes,omitempty"`
+	EtiquetasMedinas     bool                       `json:"etiquetas_medinas,omitempty"`
+	EtiquetasChicas      bool                       `json:"etiquetas_chicas,omitempty"`
+	EncargadoEtiquetas   string                     `json:"encargado_etiquetas_id,omitempty" bson:"encargadoEtiquetasId,omitempty"`
 	ListaForrada         bool                       `json:"lista_forrada,omitempty" bson:"listaForrada,omitempty"`
 	StatusForrado        string                     `json:"status_forrado,omitempty" bson:"statusForrado,omitempty"`
 	FormaPago            string                     `json:"forma_pago,omitempty" bson:"formaPago,omitempty"`
@@ -36,8 +39,7 @@ type List struct {
 	TotalGeneral         float32                    `json:"total_general,omitempty" bson:"totalGeneral,omitempty"`
 	TotalPagado          float32                    `json:"total_pagado,omitempty" bson:"totalPagado,omitempty"`
 	TotalRestante        float32                    `json:"total_restante,omitempty" bson:"totalRestante,omitempty"`
-	PreparadoPorId       primitive.ObjectID         `json:"preparado_por_id,omitempty" bson:"preparadoPorId,omitempty"`
-	CreadoPorId          primitive.ObjectID         `json:"creado_por_id,omitempty" bson:"creadoPorId,omitempty"`
+	PreparadoPorId       string                     `json:"preparado_por_id,omitempty" bson:"preparadoPorId,omitempty"`
 }
 
 type ProductoDetalle struct {
