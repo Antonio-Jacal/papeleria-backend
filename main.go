@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
@@ -11,19 +13,26 @@ import (
 )
 
 func main() {
-	// Cargar variables de entorno desde .env
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("❌ Error cargando .env")
 	}
 
-	// Conecta a MongoDB
 	config.ConnectDB()
 
-	// Inicializa servidor
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"}, // URL de tu frontend en Vite
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	routes.SetupRoutes(r)
 
-	log.Println("Servidor corriendo en http://localhost:8080")
+	log.Println("🚀 Servidor corriendo en http://localhost:8080")
 	r.Run(":8080")
 }

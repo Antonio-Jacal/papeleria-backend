@@ -10,7 +10,6 @@ func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 
 	// Rutas públicas
-	api.POST("/register", controllers.Register)
 	api.POST("/login", controllers.Login)
 
 	// Ruta protegida solo para admin y developxz
@@ -25,5 +24,9 @@ func SetupRoutes(r *gin.Engine) {
 	registerList := api.Group("/registrolista")
 	registerList.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop", "worker"))
 	registerList.POST("", controllers.RegisterList)
+
+	register := api.Group("register")
+	register.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("develop"))
+	register.POST("", controllers.Register)
 
 }
