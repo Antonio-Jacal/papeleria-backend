@@ -23,7 +23,7 @@ type List struct {
 	UtilesQuitados       map[string]int             `json:"utiles_quitados,omitempty" bson:"utilesQuitados,omitempty"`
 	DeseaQuitar          bool                       `json:"desea_quitar,omitempty" bson:"deseaQuitar,omitempty"`
 	Faltantes            map[string]int             `json:"faltantes,omitempty" bson:"faltantes,omitempty"`
-	EtiquetasPersonaje   string                     `json:"etiquetas_id,omitempty" bson:"etiquetasId,omitempty"`
+	EtiquetasPersonaje   string                     `json:"etiquetas_personajes,omitempty" bson:"etiquetasPersonajes,omitempty"`
 	StatusEtiquetas      string                     `json:"status_etiquetas,omitempty" bson:"statusEtiquetas,omitempty"`
 	EtiquetasGrandes     bool                       `json:"etiquetas_grandes,omitempty" bson:"etiquetas_grandes,omitempty"`
 	EtiquetasMedinas     bool                       `json:"etiquetas_medinas,omitempty"`

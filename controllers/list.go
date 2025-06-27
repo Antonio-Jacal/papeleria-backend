@@ -18,6 +18,8 @@ func RegisterList(c *gin.Context) {
 
 	lista := models.List{}
 
+	utils.PrintAllQueryParams(c)
+
 	if err := c.ShouldBindBodyWithJSON(&lista); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Datos Invalidos"})
 		return
@@ -61,6 +63,8 @@ func RegisterList(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	//fmt.Println(lista)
+
 	_, err = collection.InsertOne(ctx, lista)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error, no es posible guardar el documento"})
@@ -99,4 +103,8 @@ func GetList(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"lista": result})
+}
+
+func GetListWithFilters(c *gin.Context) {
+
 }
