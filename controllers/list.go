@@ -11,6 +11,7 @@ import (
 	"github.com/Antonio-Jacal/papeleria-backend.git/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func RegisterList(c *gin.Context) {
@@ -19,6 +20,7 @@ func RegisterList(c *gin.Context) {
 
 	if err := c.ShouldBindBodyWithJSON(&lista); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Datos Invalidos"})
+		return
 	}
 
 	collection := config.GetCollection("pedidos")
@@ -26,6 +28,7 @@ func RegisterList(c *gin.Context) {
 	numero, err := utils.GenerateNextNumeroLista(collection)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error en el servidor"})
+		return
 	}
 
 	lista.NumeroLista = numero
@@ -51,6 +54,7 @@ func RegisterList(c *gin.Context) {
 		lista.EtiquetasMedinas = false
 		lista.EtiquetasChicas = false
 	}
+	lista.EncargadoEtiquetas = ""
 	lista.StatusForrado = "Por forrar"
 	lista.PreparadoPorId = ""
 
@@ -60,27 +64,39 @@ func RegisterList(c *gin.Context) {
 	_, err = collection.InsertOne(ctx, lista)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error, no es posible guardar el documento"})
+		return
 	} else {
 		fmt.Println("Mandamos confirmacion por correo")
 		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
+		return
 	}
 
 }
 
 func GetList(c *gin.Context) {
-	param := c.Query("lista")
-	filter := bson.M{}
-	filter["grado"] = param
+	param := c.Query("grado")
+	if param == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "El parámetro 'lista' es requerido"})
+		return
+	}
+
+	filter := bson.M{"grado": param}
 
 	collection := config.GetCollection("listas")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	fmt.Println(filter)
-	lista := collection.FindOne(ctx, bson.M{"grado": "Primaria 2"})
-	if lista == nil {
-		c.JSON(http.StatusOK, "No existe esa lista")
-	}
-	c.JSON(http.StatusOK, gin.H{"lista": lista})
 
+	var result bson.M
+	err := collection.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"message": "No existe esa lista"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"lista": result})
 }

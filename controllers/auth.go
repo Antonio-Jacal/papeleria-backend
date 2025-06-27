@@ -88,5 +88,6 @@ func Login(c *gin.Context) {
 		"token":  token,
 		"userId": user.ID.Hex(),
 		"rol":    user.Rol,
+		"name":   user.Nombre,
 	})
 }
