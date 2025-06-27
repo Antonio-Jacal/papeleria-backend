@@ -10,6 +10,7 @@ import (
 	"github.com/Antonio-Jacal/papeleria-backend.git/models"
 	"github.com/Antonio-Jacal/papeleria-backend.git/utils"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func RegisterList(c *gin.Context) {
@@ -63,5 +64,23 @@ func RegisterList(c *gin.Context) {
 		fmt.Println("Mandamos confirmacion por correo")
 		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 	}
+
+}
+
+func GetList(c *gin.Context) {
+	param := c.Query("lista")
+	filter := bson.M{}
+	filter["grado"] = param
+
+	collection := config.GetCollection("listas")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	fmt.Println(filter)
+	lista := collection.FindOne(ctx, bson.M{"grado": "Primaria 2"})
+	if lista == nil {
+		c.JSON(http.StatusOK, "No existe esa lista")
+	}
+	c.JSON(http.StatusOK, gin.H{"lista": lista})
 
 }

@@ -29,4 +29,8 @@ func SetupRoutes(r *gin.Engine) {
 	register.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("develop"))
 	register.POST("", controllers.Register)
 
+	listas := api.Group("/listas")
+	listas.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("worker", "admin", "develop"))
+	listas.GET("", controllers.GetList)
+
 }
