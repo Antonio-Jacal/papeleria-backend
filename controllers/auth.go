@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/config"
@@ -55,6 +57,35 @@ func Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo crear el usuario"})
 		return
 	}
+
+	// Enviar correo de bienvenida
+	htmlBody := fmt.Sprintf(`
+<html>
+  <body style="font-family: sans-serif; color: #333;">
+    <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 10px;">
+      <h2 style="color: #4CAF50;">¡Bienvenido al equipo, %s! 🎉</h2>
+      <p style="font-size: 16px;">
+        ¿Estás listo para una nueva temporada de <strong>papelería</strong>?<br><br>
+        Estamos muy emocionados de tenerte con nosotros.
+      </p>
+      <p style="font-size: 16px; margin-top: 30px;">
+        <strong>Tu contraseña para acceder a la plataforma es:</strong>
+      </p>
+      <div style="background-color: #f2f2f2; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; text-align: center;">
+        %s
+      </div>
+      <p style="font-size: 14px;">¡Mucho éxito!<br>El equipo de Papelería</p>
+    </div>
+  </body>
+</html>
+`, input.Nombre, input.Password)
+
+	go func() {
+		err := utils.SendHTMLEmail([]string{input.Email}, "🎒 Bienvenido a la plataforma de papelería Nina's", htmlBody)
+		if err != nil {
+			log.Printf("Error al enviar correo de bienvenida a %s: %v", input.Email, err)
+		}
+	}()
 
 	c.JSON(http.StatusCreated, gin.H{"mensaje": "Usuario registrado correctamente"})
 }

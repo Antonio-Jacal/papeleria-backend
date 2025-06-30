@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/Antonio-Jacal/papeleria-backend.git/models"
 	"github.com/Antonio-Jacal/papeleria-backend.git/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -97,6 +99,69 @@ func RegisterList(c *gin.Context) {
 		return
 	} else {
 		fmt.Println("Mandamos confirmacion por correo")
+		err := godotenv.Load()
+		if err != nil {
+			log.Println("No se pudo cargar el .env, usando variables del sistema")
+		}
+		to := []string{lista.Correo}
+		subject := fmt.Sprintf("Confirmación de pedido %s", lista.NumeroLista)
+		html := fmt.Sprintf(`
+<html>
+  <body style="font-family: sans-serif; color: #333;">
+    <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 10px;">
+      <h2 style="color: #2196F3;">Confirmación de Pedido: %s</h2>
+      <p>¡Hola <strong>%s</strong>!</p>
+      <p>El pedido para <strong>%s</strong> (Grado: <strong>%s</strong>) ha sido registrado exitosamente.</p>
+
+      <p><strong>Detalles del pedido:</strong></p>
+      <ul>
+        <li><strong>Número de lista:</strong> %s</li>
+        <li><strong>Fecha de creación:</strong> %s</li>
+        <li><strong>Fecha estimada de entrega:</strong> %s</li>
+        <li><strong>Etiquetas:</strong> %s</li>
+      </ul>
+
+      <p><strong>Productos solicitados:</strong></p>
+      %s
+
+      <p><strong>Útiles quitados:</strong></p>
+      %s
+
+      <hr style="margin: 20px 0;" />
+
+      <p><strong>Total a pagar:</strong> $%.2f MXN</p>
+      <p><strong>Total pagado:</strong> $%.2f MXN</p>
+      <p><strong>Total restante:</strong> $%.2f MXN</p>
+
+      <p style="font-size: 14px; color: #888; margin-top: 30px;">
+        Gracias por confiar en nosotros.<br>
+        <em>Equipo de Papelería Nina's</em>
+      </p>
+    </div>
+  </body>
+</html>
+`,
+			lista.NumeroLista,
+			lista.NombreTutor,
+			lista.NombreAlumno,
+			lista.Grado,
+			lista.NumeroLista,
+			utils.FormatDate(lista.FechaCreacion),
+			utils.FormatDate(lista.FechaEntregaEsperada),
+			lista.EtiquetasPersonaje,
+			utils.BuildProductosHTML(lista.Productos),
+			utils.BuildUtilesQuitadosHTML(lista.UtilesQuitados),
+			lista.TotalGeneral,
+			lista.TotalPagado,
+			lista.TotalRestante,
+		)
+
+		err = utils.SendHTMLEmail(to, subject, html)
+		if err != nil {
+			log.Fatal("Fallo al enviar correo:", err)
+		}
+
+		log.Println("Correo enviado exitosamente.")
 		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 		return
 	}
