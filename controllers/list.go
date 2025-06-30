@@ -15,62 +15,89 @@ import (
 )
 
 func RegisterList(c *gin.Context) {
-
-	lista := models.List{}
-
-	if err := c.ShouldBindBodyWithJSON(&lista); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "Datos Invalidos"})
+	var lista models.List
+	if err := c.ShouldBindJSON(&lista); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error":   "Datos inválidos",
+			"Detalle": err.Error(),
+		})
 		return
 	}
 
-	collection := config.GetCollection("pedidos")
-
-	numero, err := utils.GenerateNextNumeroLista(collection)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error en el servidor"})
-		return
+	// Validación mejorada
+	missingFields := []string{}
+	if lista.NombreTutor == "" {
+		missingFields = append(missingFields, "nombreTutor")
+	}
+	if lista.NombreAlumno == "" {
+		missingFields = append(missingFields, "nombreAlumno")
+	}
+	if lista.Correo == "" {
+		missingFields = append(missingFields, "correo")
+	}
+	if lista.Grado == "" {
+		missingFields = append(missingFields, "grado")
+	}
+	if lista.Telefono == "" {
+		missingFields = append(missingFields, "numero")
 	}
 
-	lista.NumeroLista = numero
+	if len(missingFields) > 0 {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"Error":  "Campos obligatorios faltantes",
+			"Campos": missingFields,
+		})
+		return
+	}
+	// Asegura los valores por defecto
+	if lista.FechaCreacion == nil {
+		loc, _ := time.LoadLocation("America/Mexico_City")
+		now := time.Now().In(loc)
+		lista.FechaCreacion = &now
+	}
+
+	// Configuración de campos automáticos
+	lista.EstadoLista = "Por preparar"
 	lista.PIN = utils.GeneratePin()
 
-	lista.FechaEntregaReal = nil
-	loc, _ := time.LoadLocation("America/Mexico_City")
-	now := time.Now().In(loc)
-	lista.FechaCreacion = &now
-	lista.EstadoLista = "Por preparar" // Por preparar, prerada, lista, Con Faltantes
-	lista.Faltantes = nil
-	if lista.EtiquetasPersonaje == "" {
-		lista.EtiquetasPersonaje = "Por confirmar"
-	}
+	// Configuración condicional
 	if lista.ListaForrada {
+		lista.StatusForrado = "Por forrar"
 		lista.StatusEtiquetas = "Por hacer"
-		lista.EtiquetasGrandes = true
-		lista.EtiquetasMedinas = true
 		lista.EtiquetasChicas = true
+		lista.EtiquetasGrandes = true
+		lista.EtiquetasMedianas = true
 	} else {
+		lista.StatusForrado = "No aplica"
 		lista.StatusEtiquetas = "No aplica"
-		lista.EtiquetasGrandes = false
-		lista.EtiquetasMedinas = false
 		lista.EtiquetasChicas = false
+		lista.EtiquetasGrandes = false
+		lista.EtiquetasMedianas = false
 	}
-	lista.EncargadoEtiquetas = ""
-	lista.StatusForrado = "Por forrar"
-	lista.PreparadoPorId = ""
 
+	// Generar número de lista
+	collection := config.GetCollection("pedidos")
+	numero, err := utils.GenerateNextNumeroLista(collection)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Error generando número de lista"})
+		return
+	}
+	lista.NumeroLista = numero
+
+	// Insertar en MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err = collection.InsertOne(ctx, lista)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error, no es posible guardar el documento"})
-		return
-	} else {
-		fmt.Println("Mandamos confirmacion por correo")
-		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
+	if _, err := collection.InsertOne(ctx, lista); err != nil {
+		fmt.Printf("Error insertando lista: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Error guardando la lista"})
 		return
 	}
 
+	c.JSON(http.StatusCreated, gin.H{
+		"mensaje": "Lista registrada exitosamente",
+		"correo":  lista.Correo,
+	})
 }
 
 func GetList(c *gin.Context) {
