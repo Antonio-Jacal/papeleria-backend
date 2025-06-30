@@ -88,16 +88,18 @@ func RegisterList(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if _, err := collection.InsertOne(ctx, lista); err != nil {
-		fmt.Printf("Error insertando lista: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Error guardando la lista"})
+	//fmt.Println(lista)
+
+	_, err = collection.InsertOne(ctx, lista)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error, no es posible guardar el documento"})
+		return
+	} else {
+		fmt.Println("Mandamos confirmacion por correo")
+		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"mensaje": "Lista registrada exitosamente",
-		"correo":  lista.Correo,
-	})
 }
 
 func GetList(c *gin.Context) {
@@ -126,4 +128,8 @@ func GetList(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"lista": result})
+}
+
+func GetListWithFilters(c *gin.Context) {
+
 }
