@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/config"
@@ -99,9 +100,11 @@ func RegisterList(c *gin.Context) {
 		return
 	} else {
 		fmt.Println("Mandamos confirmacion por correo")
-		err := godotenv.Load()
-		if err != nil {
-			log.Println("No se pudo cargar el .env, usando variables del sistema")
+		if os.Getenv("ENV") != "production" {
+			err := godotenv.Load()
+			if err != nil {
+				log.Println("No se cargó el archivo .env")
+			}
 		}
 		to := []string{lista.Correo}
 		subject := fmt.Sprintf("Confirmación de pedido %s", lista.NumeroLista)
