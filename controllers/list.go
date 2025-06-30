@@ -16,6 +16,7 @@ import (
 
 func RegisterList(c *gin.Context) {
 	var lista models.List
+
 	if err := c.ShouldBindJSON(&lista); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error":   "Datos inválidos",

@@ -9,7 +9,7 @@ import (
 type List struct {
 	ID                   primitive.ObjectID         `json:"id,omitempty" bson:"_id,omitempty"`
 	NumeroLista          string                     `json:"numeroLista,omitempty" bson:"numeroLista,omitempty"`
-	PIN                  string                     `json:"pin,omitempty" bson:"PIN,omitempty"`
+	PIN                  string                     `json:"pin,omitempty" bson:"pin,omitempty"` // en bson estaba "PIN" (mayúsculas), mejor consistente con JSON
 	NombreTutor          string                     `json:"nombreTutor,omitempty" bson:"nombreTutor,omitempty"`
 	NombreAlumno         string                     `json:"nombreAlumno,omitempty" bson:"nombreAlumno,omitempty"`
 	Correo               string                     `json:"correo,omitempty" bson:"correo,omitempty"`
@@ -25,11 +25,11 @@ type List struct {
 	Faltantes            map[string]int             `json:"faltantes,omitempty" bson:"faltantes,omitempty"`
 	ListaForrada         bool                       `json:"listaForrada" bson:"listaForrada"`
 	EtiquetasPersonaje   string                     `json:"etiquetasPersonaje,omitempty" bson:"etiquetasPersonaje,omitempty"`
-	StatusEtiquetas      string                     `json:"status_etiquetas,omitempty" bson:"statusEtiquetas,Somitempty"`
+	StatusEtiquetas      string                     `json:"statusEtiquetas,omitempty" bson:"statusEtiquetas,omitempty"` // corregí tag (mayúscula y typo "Somitempty")
 	EtiquetasGrandes     bool                       `json:"etiquetasGrandes" bson:"etiquetasGrandes"`
 	EtiquetasMedianas    bool                       `json:"etiquetasMedianas" bson:"etiquetasMedianas"`
 	EtiquetasChicas      bool                       `json:"etiquetasChicas" bson:"etiquetasChicas"`
-	EncargadoEtiquetas   string                     `json:"encargadoEtiquetas_id,omitempty" bson:"encargadoEtiquetasId,omitempty"`
+	EncargadoEtiquetas   string                     `json:"encargadoEtiquetasId,omitempty" bson:"encargadoEtiquetasId,omitempty"` // ajustado para que coincida
 	StatusForrado        string                     `json:"statusForrado,omitempty" bson:"statusForrado,omitempty"`
 	FormaPago            string                     `json:"formaPago,omitempty" bson:"formaPago,omitempty"`
 	EstaPagado           bool                       `json:"estaPagado" bson:"estaPagado"`
@@ -43,12 +43,12 @@ type List struct {
 }
 
 type ProductoDetalle struct {
-	Cantidad  int `bson:"cantidad" json:"cantidad,omitempty"`
-	Preparado int `bson:"preparado" json:"preparado,omitempty"`
+	Cantidad  int `bson:"cantidad,omitempty" json:"cantidad,omitempty"`
+	Preparado int `bson:"preparado,omitempty" json:"preparado,omitempty"`
 }
 
 type Pago struct {
-	Monto     float64            `bson:"monto" json:"monto,omitempty"`
-	Fecha     primitive.DateTime `bson:"fecha" json:"fecha,omitempty"`
-	FormaPago string             `bson:"formaPago" json:"forma_pago,omitempty"`
+	Monto     float64    `bson:"monto,omitempty" json:"monto,omitempty"`
+	Fecha     *time.Time `bson:"fecha,omitempty" json:"fecha,omitempty"`
+	FormaPago string     `bson:"formaPago,omitempty" json:"formaPago,omitempty"` // corregí json tag para coincidir con bson
 }
