@@ -2,13 +2,11 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
-	"regexp"
 	"time"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/config"
@@ -26,8 +24,6 @@ var (
 			return BuildStringFilter(key, value.(string))
 		},
 	}
-
-	regex = regexp.MustCompile(`[a-zA-Z]`)
 )
 
 func RegisterList(c *gin.Context) {
@@ -230,75 +226,104 @@ func GetListWithFilters(c *gin.Context) {
 
 	collection := config.GetCollection("pedidos")
 
-	var mustFilters bson.A
+	if len(c.Request.URL.Query()) > 0 {
+		var mustFilters bson.A
 
-	for key, values := range c.Request.URL.Query() {
-		value := values[0]
-		switch key {
-		case "nombreTutor", "nombreAlumno":
-			mustFilters = append(mustFilters, BuildAutocompleteFilter(key, value))
-		case "numeroLista", "grado", "estadoLista", "statusForrado":
-			mustFilters = append(mustFilters, BuildStringFilter(key, value))
+		for key, values := range c.Request.URL.Query() {
+			value := values[0]
+			if value != "" {
+				switch key {
+				case "nombreTutor", "nombreAlumno":
+					mustFilters = append(mustFilters, BuildAutocompleteFilter(key, value))
+				case "numeroLista", "grado", "statusLista", "statusForrado":
+					mustFilters = append(mustFilters, BuildStringFilter(key, value))
+				}
+			}
 		}
-	}
 
-	var filterRanges bson.A
+		var filterRanges bson.A
 
-	if r := buildDateRangeFilter(c.Query("fechaCreacionInicial"), c.Query("fechaCreacionFinal"), "fechaCreacion"); r != nil {
-		filterRanges = append(filterRanges, r)
-	}
-	if r := buildDateRangeFilter(c.Query("fechaEntregaInicial"), c.Query("fechaEntregaFinal"), "fechaEntregaEsperada"); r != nil {
-		filterRanges = append(filterRanges, r)
-	}
+		if r := buildDateRangeFilter(c.Query("fechaCreacionInicial"), c.Query("fechaCreacionFinal"), "fechaCreacion"); r != nil {
+			filterRanges = append(filterRanges, r)
+		}
+		if r := buildDateRangeFilter(c.Query("fechaEntregaInicial"), c.Query("fechaEntregaFinal"), "fechaEntregaEsperada"); r != nil {
+			filterRanges = append(filterRanges, r)
+		}
 
-	searchStage := bson.D{}
+		searchStage := bson.D{}
 
-	if len(filterRanges) > 0 {
-		searchStage = bson.D{{
-			Key: "$search", Value: bson.D{
-				{Key: "index", Value: "pedidos"},
-				{Key: "compound", Value: bson.D{
-					{Key: "must", Value: mustFilters},
-					{Key: "filter", Value: filterRanges},
-				}},
-			},
-		}}
+		if len(filterRanges) > 0 && len(mustFilters) > 0 {
+			searchStage = bson.D{{
+				Key: "$search", Value: bson.D{
+					{Key: "index", Value: "pedidos"},
+					{Key: "compound", Value: bson.D{
+						{Key: "must", Value: mustFilters},
+						{Key: "filter", Value: filterRanges},
+					}},
+				},
+			}}
+		} else if len(mustFilters) > 0 {
+			searchStage = bson.D{{
+				Key: "$search", Value: bson.D{
+					{Key: "index", Value: "pedidos"},
+					{Key: "compound", Value: bson.D{
+						{Key: "must", Value: mustFilters},
+					}},
+				},
+			}}
+		} else {
+			searchStage = bson.D{{
+				Key: "$search", Value: bson.D{
+					{Key: "index", Value: "pedidos"},
+					{Key: "compound", Value: bson.D{
+						{Key: "filter", Value: filterRanges},
+					}},
+				},
+			}}
+		}
+
+		pipeline := mongo.Pipeline{
+			searchStage,
+			bson.D{{Key: "$sort", Value: bson.D{{Key: "fechaCreacion", Value: 1}}}},
+		}
+		/*
+			fmt.Println("Pipeline ejecutado:")
+			for _, stage := range pipeline {
+				jsonStage, _ := json.MarshalIndent(stage, "", "  ")
+				fmt.Println(string(jsonStage))
+			}
+		*/
+		cursor, err := collection.Aggregate(ctx, pipeline)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var resultados []bson.M
+		if err := cursor.All(ctx, &resultados); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudieron procesar los resultados"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"resultados": resultados})
 	} else {
-		searchStage = bson.D{{
-			Key: "$search", Value: bson.D{
-				{Key: "index", Value: "pedidos"},
-				{Key: "compound", Value: bson.D{
-					{Key: "must", Value: mustFilters},
-				}},
-			},
-		}}
-	}
+		pipeline := mongo.Pipeline{}
+		cursor, err := collection.Aggregate(ctx, pipeline)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
+			return
+		}
+		defer cursor.Close(ctx)
 
-	pipeline := mongo.Pipeline{
-		searchStage,
-		bson.D{{Key: "$sort", Value: bson.D{{Key: "fechaCreacion", Value: 1}}}},
-	}
+		var resultados []bson.M
+		if err := cursor.All(ctx, &resultados); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudieron procesar los resultados"})
+			return
+		}
 
-	fmt.Println("Pipeline ejecutado:")
-	for _, stage := range pipeline {
-		jsonStage, _ := json.MarshalIndent(stage, "", "  ")
-		fmt.Println(string(jsonStage))
+		c.JSON(http.StatusOK, gin.H{"resultados": resultados})
 	}
-
-	cursor, err := collection.Aggregate(ctx, pipeline)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
-		return
-	}
-	defer cursor.Close(ctx)
-
-	var resultados []bson.M
-	if err := cursor.All(ctx, &resultados); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudieron procesar los resultados"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"resultados": resultados})
 }
 
 func BuildStringFilter(key, value string) bson.D {
@@ -320,8 +345,7 @@ func BuildAutocompleteFilter(key, value string) bson.D {
 }
 
 func buildDateRangeFilter(at, between, campo string) bson.D {
-
-	var t1, t2 *time.Time = nil, nil
+	var t1, t2 *time.Time
 	if at != "" {
 		t1, _ = utils.ParseTimeParam(at)
 	}
@@ -329,35 +353,22 @@ func buildDateRangeFilter(at, between, campo string) bson.D {
 		t2, _ = utils.ParseTimeParam(between)
 	}
 
+	rangeQuery := bson.D{{Key: "path", Value: campo}}
+
 	switch {
 	case t1 != nil && t2 != nil:
 		if t1.After(*t2) {
 			t1, t2 = t2, t1
 		}
-		return bson.D{
-			{Key: "range", Value: bson.D{
-				{Key: "path", Value: campo},
-				{Key: "$gte", Value: t1},
-				{Key: "$lte", Value: t2},
-			}},
-		}
+		rangeQuery = append(rangeQuery, bson.E{Key: "gte", Value: t1})
+		rangeQuery = append(rangeQuery, bson.E{Key: "lte", Value: t2})
 	case t1 != nil:
-		return bson.D{
-			{Key: "range", Value: bson.D{
-				{Key: "path", Value: campo},
-				{Key: "$gte", Value: t1},
-			}},
-		}
-
+		rangeQuery = append(rangeQuery, bson.E{Key: "gte", Value: t1})
 	case t2 != nil:
-		return bson.D{
-			{Key: "range", Value: bson.D{
-				{Key: "path", Value: campo},
-				{Key: "$lte", Value: t2},
-			}},
-		}
+		rangeQuery = append(rangeQuery, bson.E{Key: "lte", Value: t2})
 	default:
 		return nil
 	}
 
+	return bson.D{{Key: "range", Value: rangeQuery}}
 }
