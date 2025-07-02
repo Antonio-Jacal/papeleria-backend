@@ -63,19 +63,23 @@ func PrintAllQueryParams(c *gin.Context) {
 	}
 }
 
-func BuildFilterList(c *gin.Context) {
-	//Numero de lista
-	//Nombre alumno
-	//Nombre tutor
-	//Grado
-	//Rango de fecha creada
-	//Rango de fecha de entrega
-	//Estatus listas
-	//Estatus forrado
-	filters := bson.M{}
-	filters["numeroLista"] = c.Query("numeroLista")
-	filters["grado"] = c.Query("grado")
-	filters["statusEtiquetas"] = c.Query("statusEtiqueta")
-	filters["statusForrado"] = c.Query("statusForrado")
+// ParseTimeParam convierte un string a time.Time
+func ParseTimeParam(dateStr string) (*time.Time, error) {
+	if dateStr == "" {
+		return nil, nil
+	}
 
+	// Primero intenta con formato simple YYYY-MM-DD
+	t, err := time.Parse("2006-01-02", dateStr)
+	if err == nil {
+		return &t, nil
+	}
+
+	// Si falla, intenta con formato RFC3339
+	t, err = time.Parse(time.RFC3339, dateStr)
+	if err != nil {
+		return nil, fmt.Errorf("fecha debe estar en formato YYYY-MM-DD o RFC3339")
+	}
+
+	return &t, nil
 }

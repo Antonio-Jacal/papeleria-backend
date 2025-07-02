@@ -52,3 +52,23 @@ type Pago struct {
 	Fecha     *time.Time `bson:"fecha,omitempty" json:"fecha,omitempty"`
 	FormaPago string     `bson:"formaPago,omitempty" json:"formaPago,omitempty"` // corregí json tag para coincidir con bson
 }
+
+type FilterList struct {
+	//Filtros:
+	//Numero de lista
+	//nombre Tutor (regex)
+	//nombre Alumno (regex)
+	//grado
+	//fecha Creacion
+	//Fecha de entrega
+	//Status lista
+	//Status forrado
+	NumLista      string     `json:"num_lista,omitempty"`
+	NombreTutor   string     `json:"nombre_tutor,omitempty"`
+	NombreAlumno  string     `json:"nombre_alumno,omitempty"`
+	Grado         string     `json:"grado,omitempty"`
+	StatusLista   string     `json:"status_lista,omitempty"`
+	StatusForrado string     `json:"status_forrado,omitempty"`
+	FechaCreacion *time.Time `json:"fecha_creacion,omitempty"`
+	FechaEntrega  *time.Time `json:"fecha_entrega,omitempty"`
+}
