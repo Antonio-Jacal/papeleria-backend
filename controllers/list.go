@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -235,8 +236,17 @@ func GetListWithFilters(c *gin.Context) {
 				switch key {
 				case "nombreTutor", "nombreAlumno":
 					mustFilters = append(mustFilters, BuildAutocompleteFilter(key, value))
-				case "numeroLista", "grado", "statusLista", "statusForrado":
+				case "numeroLista", "statusLista", "statusForrado":
 					mustFilters = append(mustFilters, BuildStringFilter(key, value))
+				case "grado":
+					mustFilters = append(mustFilters, bson.M{
+						"phrase": bson.M{
+							"query": value,
+							"path":  key,
+							//"fuzzy": bson.M{"maxEdits": 0},
+						},
+					})
+
 				}
 			}
 		}
@@ -286,16 +296,24 @@ func GetListWithFilters(c *gin.Context) {
 			searchStage,
 			bson.D{{Key: "$sort", Value: bson.D{{Key: "fechaCreacion", Value: 1}}}},
 		}
+
+		fmt.Println("Pipeline ejecutado:")
+		for _, stage := range pipeline {
+			jsonStage, _ := json.MarshalIndent(stage, "", "  ")
+			fmt.Println(string(jsonStage))
+		}
+
+		cursor, err := collection.Aggregate(ctx, pipeline)
 		/*
-			fmt.Println("Pipeline ejecutado:")
-			for _, stage := range pipeline {
-				jsonStage, _ := json.MarshalIndent(stage, "", "  ")
-				fmt.Println(string(jsonStage))
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
+				return
 			}
 		*/
-		cursor, err := collection.Aggregate(ctx, pipeline)
+
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
+			fmt.Println("Error de Aggregate:", err) // 👈 esto
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		defer cursor.Close(ctx)
