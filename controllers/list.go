@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/config"
@@ -213,54 +213,88 @@ func GetList(c *gin.Context) {
 }
 
 func GetListWithFilters(c *gin.Context) {
-	//Filtros:
-	//Numero de lista
-	//nombre Tutor (regex)
-	//nombre Alumno
-	//grado
-	//fecha Creacion
-	//Fecha de entrega
-	//Status lista
-	//Status forrado
-	filters := bson.A{}
-	for key, value := range c.Request.URL.Query() {
-		rType := reflect.TypeOf(value)
-		if builder, ok := filterBuilders[rType]; ok {
-			filters = append(filters, builder(key, value))
-		}
-	}
-	filterDateCreation := buildDateRangeFilter(c.Query("fechaCreacionInicial"), c.Query("fechaCreacionFinal"), "fechaCreacion")
-	filterDateDelivery := buildDateRangeFilter(c.Query("fechaEntregaInicial"), c.Query("fechaEntregaFinal"), "fechaEntregaEsperada")
-
-	pipeline := mongo.Pipeline{
-		{
-			{Key: "$search", Value: bson.D{
-				{Key: "$index", Value: "pedidos"},
-				{Key: "compound", Value: bson.D{
-					{Key: "must", Value: filters},
-					{Key: "filter", Value: filterDateCreation},
-					{Key: "filter", Value: filterDateDelivery},
-				}},
-			}},
-		},
-	}
-	pipeline = append(pipeline, bson.D{{Key: "$sort", Value: "1"}})
-
-	collection := config.GetCollection("pedidos")
-
+	/*
+		numeroLista string
+		nombreTutor (regex autocomplete) string
+		nombreAlumno (regex autocomplete) string
+		grado string
+		fechaCreacionInicial fecha
+		fechaCreacionFinal fecha
+		fechaEntregaInicial fecha
+		fechaEntregaFinal fecha
+		statusLista string
+		statusForrado string
+	*/
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	collection := config.GetCollection("pedidos")
+
+	var mustFilters bson.A
+
+	for key, values := range c.Request.URL.Query() {
+		value := values[0]
+		switch key {
+		case "nombreTutor", "nombreAlumno":
+			mustFilters = append(mustFilters, BuildAutocompleteFilter(key, value))
+		case "numeroLista", "grado", "estadoLista", "statusForrado":
+			mustFilters = append(mustFilters, BuildStringFilter(key, value))
+		}
+	}
+
+	var filterRanges bson.A
+
+	if r := buildDateRangeFilter(c.Query("fechaCreacionInicial"), c.Query("fechaCreacionFinal"), "fechaCreacion"); r != nil {
+		filterRanges = append(filterRanges, r)
+	}
+	if r := buildDateRangeFilter(c.Query("fechaEntregaInicial"), c.Query("fechaEntregaFinal"), "fechaEntregaEsperada"); r != nil {
+		filterRanges = append(filterRanges, r)
+	}
+
+	searchStage := bson.D{}
+
+	if len(filterRanges) > 0 {
+		searchStage = bson.D{{
+			Key: "$search", Value: bson.D{
+				{Key: "index", Value: "pedidos"},
+				{Key: "compound", Value: bson.D{
+					{Key: "must", Value: mustFilters},
+					{Key: "filter", Value: filterRanges},
+				}},
+			},
+		}}
+	} else {
+		searchStage = bson.D{{
+			Key: "$search", Value: bson.D{
+				{Key: "index", Value: "pedidos"},
+				{Key: "compound", Value: bson.D{
+					{Key: "must", Value: mustFilters},
+				}},
+			},
+		}}
+	}
+
+	pipeline := mongo.Pipeline{
+		searchStage,
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "fechaCreacion", Value: 1}}}},
+	}
+
+	fmt.Println("Pipeline ejecutado:")
+	for _, stage := range pipeline {
+		jsonStage, _ := json.MarshalIndent(stage, "", "  ")
+		fmt.Println(string(jsonStage))
+	}
+
 	cursor, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "No se pudo realizar el filtro correspondiente, pipeline invalid"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
 		return
 	}
 	defer cursor.Close(ctx)
 
 	var resultados []bson.M
 	if err := cursor.All(ctx, &resultados); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No es posible procesar los datos"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudieron procesar los resultados"})
 		return
 	}
 
@@ -268,12 +302,6 @@ func GetListWithFilters(c *gin.Context) {
 }
 
 func BuildStringFilter(key, value string) bson.D {
-	if key == "nombreTutor" || key == "nombreAlumno" {
-		regexFilter := BuildAutocompleteFilter(key, value)
-		if regexFilter != nil {
-			return regexFilter
-		}
-	}
 	return bson.D{
 		{Key: "text", Value: bson.D{
 			{Key: "query", Value: value},
@@ -283,17 +311,12 @@ func BuildStringFilter(key, value string) bson.D {
 }
 
 func BuildAutocompleteFilter(key, value string) bson.D {
-	for word := range strings.FieldsSeq(value) {
-		if regex.MatchString(word) {
-			return bson.D{
-				{Key: "autocomplete", Value: bson.D{
-					{Key: "query", Value: word},
-					{Key: "path", Value: key},
-				}},
-			}
-		}
-	}
-	return nil
+	return bson.D{{
+		Key: "autocomplete", Value: bson.D{
+			{Key: "query", Value: value},
+			{Key: "path", Value: key},
+		},
+	}}
 }
 
 func buildDateRangeFilter(at, between, campo string) bson.D {
@@ -333,13 +356,8 @@ func buildDateRangeFilter(at, between, campo string) bson.D {
 				{Key: "$lte", Value: t2},
 			}},
 		}
-	}
-
-	return bson.D{
-		{Key: "range", Value: bson.D{
-			{Key: "path", Value: campo},
-			{Key: "", Value: ""},
-		}},
+	default:
+		return nil
 	}
 
 }
