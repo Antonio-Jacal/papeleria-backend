@@ -18,24 +18,30 @@ func GenerateNextNumeroLista(collection *mongo.Collection) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Buscamos el último `numeroLista` con formato LTSdddd (4 dígitos)
 	opts := options.FindOne().SetSort(bson.D{{Key: "numeroLista", Value: -1}})
-	var lastList models.List
+	filter := bson.M{
+		"numeroLista": bson.M{"$regex": "^LTS\\d{4}$"},
+	}
 
-	err := collection.FindOne(ctx, bson.M{
-		"numeroLista": bson.M{"$regex": "^LTS\\d+$"},
-	}, opts).Decode(&lastList)
+	var lastList models.List
+	err := collection.FindOne(ctx, filter, opts).Decode(&lastList)
 
 	if err != nil && err != mongo.ErrNoDocuments {
 		return "", err
 	}
 
 	nextNumber := 1
-	if lastList.NumeroLista != "" {
-		fmt.Sscanf(lastList.NumeroLista, "LTS%d", &nextNumber)
+	if err == nil && lastList.NumeroLista != "" {
+		_, parseErr := fmt.Sscanf(lastList.NumeroLista, "LTS%04d", &nextNumber)
+		if parseErr != nil {
+			return "", fmt.Errorf("error parsing numeroLista: %v", parseErr)
+		}
 		nextNumber++
 	}
 
-	return fmt.Sprintf("LTS%d", nextNumber), nil
+	// Retornamos con padding de 4 dígitos: LTS0001, LTS0002, ...
+	return fmt.Sprintf("LTS%04d", nextNumber), nil
 }
 
 func GeneratePin() string {
