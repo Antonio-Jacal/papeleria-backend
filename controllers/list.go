@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -389,4 +390,27 @@ func buildDateRangeFilter(at, between, campo string) bson.D {
 	}
 
 	return bson.D{{Key: "range", Value: rangeQuery}}
+}
+
+func GetPedidoID(c *gin.Context) {
+	idParam := c.Param("id")
+	objectId, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var lista models.List
+	collection := config.GetCollection("pedidos")
+
+	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&lista)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Lista no encontrada"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"lista": lista})
 }
