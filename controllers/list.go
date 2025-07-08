@@ -185,18 +185,17 @@ func RegisterList(c *gin.Context) {
 func GetList(c *gin.Context) {
 	param := c.Query("grado")
 	if param == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "El parámetro 'lista' es requerido"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "El parámetro 'grado' es requerido"})
 		return
 	}
 
 	filter := bson.M{"grado": param}
-
 	collection := config.GetCollection("listas")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var result bson.M
+	var result bson.D
 	err := collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -207,7 +206,15 @@ func GetList(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"lista": result})
+	c.Data(http.StatusOK, "application/json", mustMarshal(result))
+}
+
+func mustMarshal(d bson.D) []byte {
+	b, err := bson.MarshalExtJSON(d, false, false)
+	if err != nil {
+		return []byte(`{"error": "fallo al serializar JSON ordenado"}`)
+	}
+	return b
 }
 
 func GetListWithFilters(c *gin.Context) {
