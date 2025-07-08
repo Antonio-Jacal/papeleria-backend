@@ -206,7 +206,7 @@ func GetList(c *gin.Context) {
 		return
 	}
 
-	c.Data(http.StatusOK, "application/json", mustMarshal(result))
+	c.JSON(http.StatusOK, mustMarshal(result))
 }
 
 func mustMarshal(d bson.D) []byte {
