@@ -4,17 +4,28 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/models"
+	"github.com/joho/godotenv"
 )
 
 func SendMessageFromWhatsapp(recipientPhone string) (bool, error) {
+
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Println("No se cargó el archivo .env")
+		}
+	}
+
 	ACCESS_TOKEN := os.Getenv("TOKEN_ACCESS_WHATSAPP")
 	PHONENUMBER_ID := os.Getenv("PHONE_NUMBER_ID")
 
-	recipientPhone = fmt.Sprintf("521%s", recipientPhone)
+	recipientPhone = fmt.Sprintf("52%s", recipientPhone)
 
 	msg := models.MessageRequest{
 		MessagingProduct: "whatsapp",
@@ -48,6 +59,9 @@ func SendMessageFromWhatsapp(recipientPhone string) (bool, error) {
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	fmt.Println("Respuesta del servidor:")
+	fmt.Println(string(bodyBytes))
 	// Muestra el resultado
 	fmt.Println("Código de respuesta:", resp.StatusCode)
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {

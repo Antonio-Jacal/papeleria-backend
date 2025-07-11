@@ -175,7 +175,7 @@ func RegisterList(c *gin.Context) {
 			log.Fatal("Fallo al enviar correo:", err)
 		}
 
-		confirmacion, err := utils.SendMessageFromWhatsapp(lista.NombreTutor)
+		confirmacion, err := utils.SendMessageFromWhatsapp(lista.Telefono)
 		if err != nil && !confirmacion {
 			log.Fatal("Fallo el envio de mensaje por whatsapp", err)
 		}
