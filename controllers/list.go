@@ -104,22 +104,26 @@ func RegisterList(c *gin.Context) {
 	defer cancel()
 
 	//fmt.Println(lista)
-
-	_, err = collection.InsertOne(ctx, lista)
+	if os.Getenv("ENV") == "production" {
+		_, err = collection.InsertOne(ctx, lista)
+	} else {
+		err = nil
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error, no es posible guardar el documento"})
 		return
 	} else {
-		fmt.Println("Mandamos confirmacion por correo")
-		if os.Getenv("ENV") != "production" {
-			err := godotenv.Load()
-			if err != nil {
-				log.Println("No se cargó el archivo .env")
+		if os.Getenv("ENV") != "develop" {
+			fmt.Println("Mandamos confirmacion por correo")
+			if os.Getenv("ENV") != "production" {
+				err := godotenv.Load()
+				if err != nil {
+					log.Println("No se cargó el archivo .env")
+				}
 			}
-		}
-		to := []string{lista.Correo}
-		subject := fmt.Sprintf("Confirmación de pedido %s", lista.NumeroLista)
-		html := fmt.Sprintf(`
+			to := []string{lista.Correo}
+			subject := fmt.Sprintf("Confirmación de pedido %s", lista.NumeroLista)
+			html := fmt.Sprintf(`
 <html>
   <body style="font-family: sans-serif; color: #333;">
     <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 10px;">
@@ -155,36 +159,40 @@ func RegisterList(c *gin.Context) {
   </body>
 </html>
 `,
-			lista.NumeroLista,
-			lista.NombreTutor,
-			lista.NombreAlumno,
-			lista.Grado,
-			lista.NumeroLista,
-			utils.FormatDate(lista.FechaCreacion),
-			utils.FormatDate(lista.FechaEntregaEsperada),
-			lista.EtiquetasPersonaje,
-			utils.BuildProductosHTML(lista.Productos),
-			utils.BuildUtilesQuitadosHTML(lista.UtilesQuitados),
-			lista.TotalGeneral,
-			lista.TotalPagado,
-			lista.TotalRestante,
-		)
+				lista.NumeroLista,
+				lista.NombreTutor,
+				lista.NombreAlumno,
+				lista.Grado,
+				lista.NumeroLista,
+				utils.FormatDate(lista.FechaCreacion),
+				utils.FormatDate(lista.FechaEntregaEsperada),
+				lista.EtiquetasPersonaje,
+				utils.BuildProductosHTML(lista.Productos),
+				utils.BuildUtilesQuitadosHTML(lista.UtilesQuitados),
+				lista.TotalGeneral,
+				lista.TotalPagado,
+				lista.TotalRestante,
+			)
 
-		err = utils.SendHTMLEmail(to, subject, html)
-		if err != nil {
-			log.Fatal("Fallo al enviar correo:", err)
+			err = utils.SendHTMLEmail(to, subject, html)
+			if err != nil {
+				log.Fatal("Fallo al enviar correo:", err)
+			}
 		}
 
-		confirmacion, err := utils.SendMessageFromWhatsapp(lista.Telefono)
-		if err != nil && !confirmacion {
-			log.Fatal("Fallo el envio de mensaje por whatsapp", err)
-		}
-		if confirmacion {
-			fmt.Println("Mensaje enviado por Whatsapp con exito")
+		if lista.AutorizacionWhatsapp {
+			confirmacion, err := utils.SendMessageFromWhatsapp(lista)
+			if err != nil && !confirmacion {
+				log.Fatal("Fallo el envio de mensaje por whatsapp", err)
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"Lista confirmada, correo enviado a": lista.Correo,
+				"Mensaje enviado a Whatsapp: ":       lista.Telefono,
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 		}
 
-		log.Println("Correo enviado exitosamente.")
-		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 		return
 	}
 
@@ -320,15 +328,8 @@ func GetListWithFilters(c *gin.Context) {
 		}
 
 		cursor, err := collection.Aggregate(ctx, pipeline)
-		/*
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "No se pudo ejecutar el filtro"})
-				return
-			}
-		*/
 
 		if err != nil {
-			fmt.Println("Error de Aggregate:", err) // 👈 esto
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

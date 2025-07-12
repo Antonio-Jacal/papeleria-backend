@@ -40,6 +40,7 @@ type List struct {
 	TotalPagado          float64                    `json:"totalPagado,omitempty" bson:"totalPagado,omitempty"`
 	TotalRestante        float64                    `json:"totalRestante,omitempty" bson:"totalRestante,omitempty"`
 	PreparadoPorId       string                     `json:"preparadoPorId,omitempty" bson:"preparadoPorId,omitempty"`
+	AutorizacionWhatsapp bool                       `json:"autorizacionWhatsapp,omitempty" bson:"autorizacionWhatsapp,omitempty"`
 }
 
 type ProductoDetalle struct {
@@ -54,15 +55,6 @@ type Pago struct {
 }
 
 type FilterList struct {
-	//Filtros:
-	//Numero de lista
-	//nombre Tutor (regex)
-	//nombre Alumno (regex)
-	//grado
-	//fecha Creacion
-	//Fecha de entrega
-	//Status lista
-	//Status forrado
 	NumLista      string     `json:"num_lista,omitempty"`
 	NombreTutor   string     `json:"nombre_tutor,omitempty"`
 	NombreAlumno  string     `json:"nombre_alumno,omitempty"`
