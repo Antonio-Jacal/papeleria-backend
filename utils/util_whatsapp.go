@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/models"
 	"github.com/joho/godotenv"
@@ -24,7 +25,19 @@ func SendMessageFromWhatsapp(datosLista models.List) (bool, error) {
 
 	ACCESS_TOKEN := os.Getenv("TOKEN_ACCESS_WHATSAPP")
 	PHONENUMBER_ID := os.Getenv("PHONE_NUMBER_ID")
-	URL_ARCHIVO := "https://rgajiduoagnlivrxfthm.supabase.co/storage/v1/object/public/pedidos//lista_ejemplo.pdf"
+
+	fmt.Println(datosLista.Productos)
+
+	pdfBytes, err := GenerarPDFLista(datosLista.Productos)
+	if err != nil {
+		return false, err
+	}
+	URL_ARCHIVO, err := UploadPDFToSupabase(pdfBytes, fmt.Sprintf("Lista_utiles_%s_%d.pdf", datosLista.NombreAlumno, time.Now().Unix()))
+	if err != nil {
+		return false, err
+	}
+
+	//URL_ARCHIVO := "https://rgajiduoagnlivrxfthm.supabase.co/storage/v1/object/public/pedidos//lista_ejemplo.pdf"
 
 	recipientPhone := fmt.Sprintf("52%s", strings.ReplaceAll(datosLista.Telefono, " ", ""))
 
