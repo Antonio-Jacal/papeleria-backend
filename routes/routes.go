@@ -19,7 +19,7 @@ func SetupRoutes(r *gin.Engine) {
 	protected.GET("", func(c *gin.Context) {
 		rol, _ := c.Get("rol")
 		userId, _ := c.Get("userId")
-		c.JSON(200, gin.H{"mensaje": "Bienvenido aopp9sxxxx la ruta protegida", "rol": rol, "userId": userId})
+		c.JSON(200, gin.H{"mensaje": "Bienvenido la ruta protegida", "rol": rol, "userId": userId})
 	})
 
 	registerList := api.Group("/registrolista")
@@ -37,4 +37,12 @@ func SetupRoutes(r *gin.Engine) {
 	getList := getListWithFilters.Group("/:id")
 	getList.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	getList.GET("", controllers.GetPedidoID)
+
+	reports := api.Group("/reportes")
+	reports.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop"))
+
+	reportCash := reports.Group("/resumen-facturacion")
+	reportCash.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop"))
+	reportCash.GET("", controllers.GetSummary)
+
 }
