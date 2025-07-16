@@ -49,4 +49,10 @@ func SetupRoutes(r *gin.Engine) {
 	reportLabels.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	reportLabels.GET("", controllers.GetSummaryLabels)
 
+	updateLabel := api.Group("/updateList")
+	updateLabel.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
+	getLabelId := updateLabel.Group("/:id")
+	getLabelId.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
+	getLabelId.PUT("", controllers.UpdateLabelResponse)
+
 }
