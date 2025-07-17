@@ -54,5 +54,5 @@ func SetupRoutes(r *gin.Engine) {
 	getLabelId := updateLabel.Group("/:id")
 	getLabelId.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	getLabelId.PUT("", controllers.UpdateLabelResponse)
-
+	getLabelId.POST("", controllers.UpdatePedido)
 }
