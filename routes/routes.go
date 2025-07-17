@@ -39,7 +39,7 @@ func SetupRoutes(r *gin.Engine) {
 	getList.GET("", controllers.GetPedidoID)
 
 	reports := api.Group("/reportes")
-	reports.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop"))
+	reports.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop", "worker"))
 
 	reportCash := reports.Group("/resumen-facturacion")
 	reportCash.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop"))
