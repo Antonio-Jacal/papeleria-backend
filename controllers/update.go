@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -104,6 +105,8 @@ func UpdatePedido(c *gin.Context) {
 	collection := config.GetCollection("pedidos")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	fmt.Println("Update query:", update)
 
 	result, err := collection.UpdateByID(ctx, objectID, update)
 	if err != nil {
