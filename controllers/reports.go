@@ -17,6 +17,25 @@ func GetSummary(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	resultTotal, err := collection.Find(ctx, bson.M{})
+
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"Hubo un error al encontrar los datos": err})
+		return
+	}
+	var totalWin float64
+	var totalPay float64
+
+	for resultTotal.Next(ctx) {
+		var total models.List
+		if err := resultTotal.Decode(&total); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"Hubo un error al decodificar los datos": err})
+			return
+		}
+		totalWin += total.TotalGeneral
+		totalPay += total.TotalPagado
+	}
+
 	result, err := collection.Find(ctx, bson.M{"estaPagado": false})
 
 	if err != nil {
@@ -27,8 +46,6 @@ func GetSummary(c *gin.Context) {
 	defer result.Close(ctx)
 
 	var forPayLists []models.List
-	var totalWin float64
-	var totalPay float64
 	var totalForPay float64
 
 	for result.Next(ctx) {
@@ -37,8 +54,6 @@ func GetSummary(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"Hubo un error al decodificar los datos": err})
 		}
 		forPayLists = append(forPayLists, lista)
-		totalWin += lista.TotalGeneral
-		totalPay += lista.TotalPagado
 		totalForPay += lista.TotalRestante
 	}
 
