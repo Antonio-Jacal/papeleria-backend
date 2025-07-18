@@ -40,6 +40,7 @@ type List struct {
 	TotalPagado          float64                    `json:"totalPagado,omitempty" bson:"totalPagado,omitempty"`
 	TotalRestante        float64                    `json:"totalRestante,omitempty" bson:"totalRestante,omitempty"`
 	PreparadoPorId       string                     `json:"preparadoPorId,omitempty" bson:"preparadoPorId,omitempty"`
+	Comentarios          string                     `json:"comentarios,omitempty" bson:"comentarios,omitempty"`
 }
 
 type ProductoDetalle struct {
