@@ -15,6 +15,7 @@ import (
 
 type EncargadoEtiquetasRequest struct {
 	EncargadoEtiquetas string `json:"encargadoEtiquetasId"`
+	StatusEtiquetas    string `json:"statusEtiquetas"`
 }
 
 type requestPedidoUpdate struct {
@@ -43,6 +44,7 @@ func UpdateLabelResponse(c *gin.Context) {
 	update := bson.M{
 		"$set": bson.M{
 			"encargadoEtiquetasId": responsable.EncargadoEtiquetas,
+			"statusEtiquetas":      responsable.StatusEtiquetas,
 		},
 	}
 
