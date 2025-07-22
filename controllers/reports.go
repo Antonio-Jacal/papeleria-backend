@@ -72,7 +72,7 @@ func GetSummaryLabels(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	result, err := collection.Find(ctx, bson.M{"listaForrada": true}, options.Find().SetProjection(getProjection()))
+	result, err := collection.Find(ctx, bson.M{"listaForrada": true}, options.Find().SetProjection(getProjection()).SetSort(bson.D{{Key: "numeroLista", Value: -1}}))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
