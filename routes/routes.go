@@ -53,10 +53,15 @@ func SetupRoutes(r *gin.Engine) {
 	reportUrgent.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	reportUrgent.GET("", controllers.GetUrgent)
 
+	reportFaltantes := reports.Group("/resumen-faltantes")
+	reportFaltantes.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop", "worker"))
+	reportFaltantes.GET("", controllers.GetSummaryFaltantes)
+
 	updateLabel := api.Group("/updateList")
 	updateLabel.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	getLabelId := updateLabel.Group("/:id")
 	getLabelId.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	getLabelId.PUT("", controllers.UpdateLabelResponse)
 	getLabelId.POST("", controllers.UpdatePedido)
+
 }
