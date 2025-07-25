@@ -121,7 +121,7 @@ func GetUrgent(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cursor, err := collection.Find(ctx, filter, options.Find().SetProjection(setProjectionUrgent()).SetSort(bson.M{"numeroLista": 1}))
+	cursor, err := collection.Find(ctx, filter, options.Find().SetProjection(setProjectionUrgent()).SetSort(bson.M{"fechaEntregaEsperada": 1}))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error:": err})
 		return
