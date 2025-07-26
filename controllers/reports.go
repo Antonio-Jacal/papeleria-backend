@@ -14,6 +14,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type resultUrgent struct {
+	ID                   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	NumeroLista          string             `json:"numeroLista,omitempty"`
+	NombreAlumno         string             `json:"nombreAlumno,omitempty"`
+	NombreTutor          string             `json:"nombreTutor,omitempty"`
+	Grado                string             `json:"grado,omitempty"`
+	EstadoLista          string             `json:"estadoLista,omitempty"`
+	StatusForrado        string             `json:"statusForrado,omitempty"`
+	StatusEtiquetas      string             `json:"statusEtiquetas,omitempty"`
+	FechaEntregaEsperada *time.Time         `json:"fechaEntregaEsperada,omitempty"`
+}
+
 func GetSummary(c *gin.Context) {
 	collection := config.GetCollection("pedidos")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -128,18 +140,6 @@ func GetUrgent(c *gin.Context) {
 		return
 	}
 
-	type resultUrgent struct {
-		ID                   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-		NumeroLista          string             `json:"numeroLista,omitempty"`
-		NombreAlumno         string             `json:"nombreAlumno,omitempty"`
-		NombreTutor          string             `json:"nombreTutor,omitempty"`
-		Grado                string             `json:"grado,omitempty"`
-		EstadoLista          string             `json:"estadoLista,omitempty"`
-		StatusForrado        string             `json:"statusForrado,omitempty"`
-		StatusEtiquetas      string             `json:"statusEtiquetas,omitempty"`
-		FechaEntregaEsperada *time.Time         `json:"fechaEntregaEsperada,omitempty"`
-	}
-
 	var result []resultUrgent
 	for cursor.Next(ctx) {
 		var item resultUrgent
@@ -156,6 +156,110 @@ func GetUrgent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"resutados": result})
+}
+
+func GetRetrased(c *gin.Context) {
+	filter := bson.M{
+		"estadoLista":          bson.M{"$ne": "Entregada"},
+		"fechaEntregaEsperada": bson.M{"$lte": time.Now()},
+	}
+	collection := config.GetCollection("pedidos")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, filter, options.Find().SetProjection(setProjectionUrgent()).SetSort(bson.M{"fechaEntregaEsperada": 1}))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error:": err})
+		return
+	}
+	var result []resultUrgent
+	for cursor.Next(ctx) {
+		var item resultUrgent
+		if err := cursor.Decode(&item); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error al decodificar documento:": err})
+			return
+		}
+		result = append(result, item)
+	}
+
+	if err := cursor.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error en el cursor:": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"resutados": result})
+
+}
+
+func GetTotalListas(c *gin.Context) {
+	collection := config.GetCollection("pedidos")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, bson.M{"estadoLista": bson.M{"$ne": "Entregada"}}, options.Find().SetProjection(bson.M{"grado": 1}))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error:": err})
+		return
+	}
+
+	type reportTotalLists struct {
+		Grado string `json:"grado,omitempty"`
+	}
+
+	totalP, totalK1, totalK2, totalK3, totalP1, totalP2, totalP3, totalP4, totalP5, totalP6, totalS1, totalS2, totalS3 := 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+	for cursor.Next(ctx) {
+		var item reportTotalLists
+		if err := cursor.Decode(&item); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error al decodificar: ": err})
+			return
+		}
+		switch item.Grado {
+		case "Peques":
+			totalP += 1
+		case "Preescolar 1":
+			totalK1 += 1
+		case "Preescolar 2":
+			totalK2 += 1
+		case "Preescolar 3":
+			totalK3 += 1
+		case "Primaria 1":
+			totalP1 += 1
+		case "Primaria 2":
+			totalP2 += 1
+		case "Primaria 3":
+			totalP3 += 1
+		case "Primaria 4":
+			totalP4 += 1
+		case "Primaria 5":
+			totalP5 += 1
+		case "Primaria 6":
+			totalP6 += 1
+		case "Secundaria 1":
+			totalS1 += 1
+		case "Secundaria 2":
+			totalS2 += 1
+		case "Secundaria 3":
+			totalS3 += 1
+		}
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"peques":       totalP,
+		"preescolar 1": totalK1,
+		"preescolar 2": totalK2,
+		"preescolar 3": totalK3,
+		"primaria 1":   totalP1,
+		"primaria 2":   totalP2,
+		"primaria 3":   totalP3,
+		"primaria 4":   totalP4,
+		"primaria 5":   totalP5,
+		"primaria 6":   totalP6,
+		"secundaria 1": totalS1,
+		"secundaria 2": totalS2,
+		"secundaria 3": totalS3,
+	})
 }
 
 func setProjectionUrgent() bson.M {
