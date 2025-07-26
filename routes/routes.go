@@ -61,6 +61,10 @@ func SetupRoutes(r *gin.Engine) {
 	reportRetrased.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop", "worker"))
 	reportRetrased.GET("", controllers.GetRetrased)
 
+	reportTotalList := reports.Group(("resumen-totales"))
+	reportTotalList.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "develop", "worker"))
+	reportTotalList.GET("", controllers.GetTotalListas)
+
 	updateLabel := api.Group("/updateList")
 	updateLabel.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
 	getLabelId := updateLabel.Group("/:id")

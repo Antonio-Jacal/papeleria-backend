@@ -191,6 +191,77 @@ func GetRetrased(c *gin.Context) {
 
 }
 
+func GetTotalListas(c *gin.Context) {
+	collection := config.GetCollection("pedidos")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, bson.M{"estadoLista": bson.M{"$ne": "Entregada"}}, options.Find().SetProjection(bson.M{"grado": 1}))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error:": err})
+		return
+	}
+
+	type reportTotalLists struct {
+		Grado string `json:"grado,omitempty"`
+	}
+
+	totalP, totalK1, totalK2, totalK3, totalP1, totalP2, totalP3, totalP4, totalP5, totalP6, totalS1, totalS2, totalS3 := 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+	for cursor.Next(ctx) {
+		var item reportTotalLists
+		if err := cursor.Decode(&item); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error al decodificar: ": err})
+			return
+		}
+		switch item.Grado {
+		case "Peques":
+			totalP += 1
+		case "Preescolar 1":
+			totalK1 += 1
+		case "Preescolar 2":
+			totalK2 += 1
+		case "Preescolar 3":
+			totalK3 += 1
+		case "Primaria 1":
+			totalP1 += 1
+		case "Primaria 2":
+			totalP2 += 1
+		case "Primaria 3":
+			totalP3 += 1
+		case "Primaria 4":
+			totalP4 += 1
+		case "Primaria 5":
+			totalP5 += 1
+		case "Primaria 6":
+			totalP6 += 1
+		case "Secundaria 1":
+			totalS1 += 1
+		case "Secundaria 2":
+			totalS2 += 1
+		case "Secundaria 3":
+			totalS3 += 1
+		}
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"peques":       totalP,
+		"preescolar 1": totalK1,
+		"preescolar 2": totalK2,
+		"preescolar 3": totalK3,
+		"primaria 1":   totalP1,
+		"primaria 2":   totalP2,
+		"primaria 3":   totalP3,
+		"primaria 4":   totalP4,
+		"primaria 5":   totalP5,
+		"primaria 6":   totalP6,
+		"secundaria 1": totalS1,
+		"secundaria 2": totalS2,
+		"secundaria 3": totalS3,
+	})
+}
+
 func setProjectionUrgent() bson.M {
 	return bson.M{
 		"_id":                  1,
