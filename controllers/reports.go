@@ -14,6 +14,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type resultUrgent struct {
+	ID                   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	NumeroLista          string             `json:"numeroLista,omitempty"`
+	NombreAlumno         string             `json:"nombreAlumno,omitempty"`
+	NombreTutor          string             `json:"nombreTutor,omitempty"`
+	Grado                string             `json:"grado,omitempty"`
+	EstadoLista          string             `json:"estadoLista,omitempty"`
+	StatusForrado        string             `json:"statusForrado,omitempty"`
+	StatusEtiquetas      string             `json:"statusEtiquetas,omitempty"`
+	FechaEntregaEsperada *time.Time         `json:"fechaEntregaEsperada,omitempty"`
+}
+
 func GetSummary(c *gin.Context) {
 	collection := config.GetCollection("pedidos")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -128,18 +140,6 @@ func GetUrgent(c *gin.Context) {
 		return
 	}
 
-	type resultUrgent struct {
-		ID                   primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
-		NumeroLista          string             `json:"numeroLista,omitempty"`
-		NombreAlumno         string             `json:"nombreAlumno,omitempty"`
-		NombreTutor          string             `json:"nombreTutor,omitempty"`
-		Grado                string             `json:"grado,omitempty"`
-		EstadoLista          string             `json:"estadoLista,omitempty"`
-		StatusForrado        string             `json:"statusForrado,omitempty"`
-		StatusEtiquetas      string             `json:"statusEtiquetas,omitempty"`
-		FechaEntregaEsperada *time.Time         `json:"fechaEntregaEsperada,omitempty"`
-	}
-
 	var result []resultUrgent
 	for cursor.Next(ctx) {
 		var item resultUrgent
@@ -156,6 +156,39 @@ func GetUrgent(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"resutados": result})
+}
+
+func GetRetrased(c *gin.Context) {
+	filter := bson.M{
+		"estadoLista":          bson.M{"$ne": "Entregada"},
+		"fechaEntregaEsperada": bson.M{"$lte": time.Now()},
+	}
+	collection := config.GetCollection("pedidos")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, filter, options.Find().SetProjection(setProjectionUrgent()).SetSort(bson.M{"fechaEntregaEsperada": 1}))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error:": err})
+		return
+	}
+	var result []resultUrgent
+	for cursor.Next(ctx) {
+		var item resultUrgent
+		if err := cursor.Decode(&item); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error al decodificar documento:": err})
+			return
+		}
+		result = append(result, item)
+	}
+
+	if err := cursor.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error en el cursor:": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"resutados": result})
+
 }
 
 func setProjectionUrgent() bson.M {
