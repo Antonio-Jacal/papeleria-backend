@@ -72,4 +72,7 @@ func SetupRoutes(r *gin.Engine) {
 	getLabelId.PUT("", controllers.UpdateLabelResponse)
 	getLabelId.POST("", controllers.UpdatePedido)
 
+	updateForrado := api.Group("updateForrado")
+	updateForrado.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "worker", "develop"))
+	updateForrado.PUT("/:id", controllers.UpdateForrado)
 }

@@ -21,18 +21,20 @@ type List struct {
 	EstadoLista          string                     `json:"estadoLista,omitempty" bson:"estadoLista,omitempty"`
 	Productos            map[string]ProductoDetalle `json:"productos,omitempty" bson:"productos,omitempty"`
 	UtilesQuitados       map[string]int             `json:"utilesQuitados,omitempty" bson:"utilesQuitados,omitempty"`
-	DeseaQuitar          bool                       `json:"deseaQuitar" bson:"deseaQuitar"`
+	DeseaQuitar          bool                       `json:"deseaQuitar,omitempty" bson:"deseaQuitar"`
 	Faltantes            map[string]int             `json:"faltantes,omitempty" bson:"faltantes,omitempty"`
-	ListaForrada         bool                       `json:"listaForrada" bson:"listaForrada"`
+	ListaForrada         bool                       `json:"listaForrada,omitempty" bson:"listaForrada"`
 	EtiquetasPersonaje   string                     `json:"etiquetasPersonaje,omitempty" bson:"etiquetasPersonaje,omitempty"`
 	StatusEtiquetas      string                     `json:"statusEtiquetas,omitempty" bson:"statusEtiquetas,omitempty"` // corregí tag (mayúscula y typo "Somitempty")
-	EtiquetasGrandes     bool                       `json:"etiquetasGrandes" bson:"etiquetasGrandes"`
-	EtiquetasMedianas    bool                       `json:"etiquetasMedianas" bson:"etiquetasMedianas"`
-	EtiquetasChicas      bool                       `json:"etiquetasChicas" bson:"etiquetasChicas"`
+	EtiquetasGrandes     bool                       `json:"etiquetasGrandes,omitempty" bson:"etiquetasGrandes"`
+	EtiquetasMedianas    bool                       `json:"etiquetasMedianas,omitempty" bson:"etiquetasMedianas"`
+	EtiquetasChicas      bool                       `json:"etiquetasChicas,omitempty" bson:"etiquetasChicas"`
 	EncargadoEtiquetas   string                     `json:"encargadoEtiquetasId,omitempty" bson:"encargadoEtiquetasId,omitempty"` // ajustado para que coincida
 	StatusForrado        string                     `json:"statusForrado,omitempty" bson:"statusForrado,omitempty"`
+	StatusForradoLibros  string                     `json:"statusForradoLibros,omitempty" bson:"statusForradoLibros,omitempty"`
+	StatusForradoUtiles  string                     `json:"statusForradoUtiles,omitempty" bosn:"statusForradoUtiles,omitempty"`
 	FormaPago            string                     `json:"formaPago,omitempty" bson:"formaPago,omitempty"`
-	EstaPagado           bool                       `json:"estaPagado" bson:"estaPagado"`
+	EstaPagado           bool                       `json:"estaPagado,omitempty" bson:"estaPagado"`
 	Pagos                []Pago                     `json:"pagos,omitempty" bson:"pagos,omitempty"`
 	TotalLista           float64                    `json:"totalLista,omitempty" bson:"totalLista,omitempty"`
 	TotalForrado         float64                    `json:"totalForrado,omitempty" bson:"totalForrado,omitempty"`

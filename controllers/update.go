@@ -125,3 +125,58 @@ func UpdatePedido(c *gin.Context) {
 		"status":  "ok",
 	})
 }
+
+func UpdateForrado(c *gin.Context) {
+
+	idParam := c.Param("id")
+	objectID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	type requestUpdate struct {
+		StatusForradoUtiles string `json:"statusForradoUtiles,omitempty"`
+		StatusForradoLibros string `json:"statusForradoLibros,omitempty"`
+	}
+
+	var request requestUpdate
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido"})
+		return
+	}
+
+	if request.StatusForradoLibros == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"bad request": "statusForradoLibros is empty"})
+		return
+	}
+	if request.StatusForradoUtiles == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"bad request": "statusForradoUtiles is empty"})
+		return
+	}
+
+	setFields := bson.M{}
+
+	setFields["statusForradoUtiles"] = request.StatusForradoUtiles
+	setFields["statusForradoLibros"] = request.StatusForradoLibros
+
+	if request.StatusForradoLibros == "Forrados" && request.StatusForradoUtiles == "Etiquetados" {
+		setFields["statusForrado"] = "Forrada"
+	}
+
+	collection := config.GetCollection("pedidos")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Println(setFields)
+
+	_, err = collection.UpdateByID(ctx, objectID, bson.M{"$set": setFields})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ocurrio un error al actulizar: ": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"mensaje": "Se actualizo el forrado correctamente"})
+
+}
