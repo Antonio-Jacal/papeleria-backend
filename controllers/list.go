@@ -117,44 +117,46 @@ func RegisterList(c *gin.Context) {
 				log.Println("No se cargó el archivo .env")
 			}
 		}
+
 		to := []string{lista.Correo}
 		subject := fmt.Sprintf("Confirmación de pedido %s", lista.NumeroLista)
 		html := fmt.Sprintf(`
-<html>
-  <body style="font-family: sans-serif; color: #333;">
-    <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 10px;">
-      <h2 style="color: #2196F3;">Confirmación de Pedido: %s</h2>
-      <p>¡Hola <strong>%s</strong>!</p>
-      <p>El pedido para <strong>%s</strong> (Grado: <strong>%s</strong>) ha sido registrado exitosamente.</p>
+			<html>
+			  <body style="font-family: sans-serif; color: #333;">
+			    <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 30px; border-radius: 10px;">
+			      <h2 style="color: #2196F3;">Confirmación de Pedido: %s</h2>
+			      <p>¡Hola <strong>%s</strong>!</p>
+			      <p>El pedido para <strong>%s</strong> (Grado: <strong>%s</strong>) ha sido registrado exitosamente.</p>
 
-      <p><strong>Detalles del pedido:</strong></p>
-      <ul>
-        <li><strong>Número de lista:</strong> %s</li>
-        <li><strong>Fecha de creación:</strong> %s</li>
-        <li><strong>Fecha estimada de entrega:</strong> %s</li>
-        <li><strong>Etiquetas:</strong> %s</li>
-      </ul>
+			      <p><strong>Detalles del pedido:</strong></p>
+			      <ul>
+			        <li><strong>Número de lista:</strong> %s</li>
+			        <li><strong>Fecha de creación:</strong> %s</li>
+			        <li><strong>Fecha estimada de entrega:</strong> %s</li>
+			        <li><strong>Etiquetas:</strong> %s</li>
+			      </ul>
 
-      <p><strong>Productos solicitados:</strong></p>
-      %s
+			      <p><strong>Productos solicitados:</strong></p>
+			      %s
 
-      <p><strong>Útiles quitados:</strong></p>
-      %s
+			      <p><strong>Útiles quitados:</strong></p>
+			      %s
 
-      <hr style="margin: 20px 0;" />
+			      <hr style="margin: 20px 0;" />
 
-      <p><strong>Total a pagar:</strong> $%.2f MXN</p>
-      <p><strong>Total pagado:</strong> $%.2f MXN</p>
-      <p><strong>Total restante:</strong> $%.2f MXN</p>
+			      <p><strong>Total a pagar:</strong> $%.2f MXN</p>
+			      <p><strong>Total pagado:</strong> $%.2f MXN</p>
+			      <p><strong>Total restante:</strong> $%.2f MXN</p>
 
-      <p style="font-size: 14px; color: #888; margin-top: 30px;">
-        Gracias por confiar en nosotros.<br>
-        <em>Equipo de Papelería Nina's</em>
-      </p>
-    </div>
-  </body>
-</html>
-`,
+			      <p style="font-size: 14px; color: #888; margin-top: 30px;">
+			        Gracias por confiar en nosotros.<br>
+			        <em>Equipo de Papelería Nina's</em>
+			      </p>
+			    </div>
+			  </body>
+			</html>
+			`,
+
 			lista.NumeroLista,
 			lista.NombreTutor,
 			lista.NombreAlumno,
@@ -169,18 +171,19 @@ func RegisterList(c *gin.Context) {
 			lista.TotalPagado,
 			lista.TotalRestante,
 		)
+		/*
+			err = utils.SendHTMLEmail(to, subject, html)
+			if err != nil {
+				log.Printf("Fallo al enviar correo: %v", err)
 
-		err = utils.SendHTMLEmail(to, subject, html)
-		if err != nil {
-			log.Printf("Fallo al enviar correo: %v", err)
-
-			c.JSON(http.StatusOK, gin.H{
-				"mensaje":       "Lista registrada correctamente",
-				"correoEnviado": false,
-			})
-			return
-		}
-
+				c.JSON(http.StatusOK, gin.H{
+					"mensaje":       "Lista registrada correctamente",
+					"correoEnviado": false,
+				})
+				return
+			}
+		*/
+		utils.SendHTMLEmailResend(to, subject, html)
 		log.Println("Correo enviado exitosamente.")
 		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 		return
