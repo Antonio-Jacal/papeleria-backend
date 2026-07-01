@@ -44,7 +44,7 @@ func SendHTMLEmailResend(to []string, subject string, htmlBody string) error {
 
 	params := &resend.SendEmailRequest{
 		From:    "onboarding@resend.dev",
-		To:      to,
+		To:      []string{"antoniojacalm@gmail.com"},
 		Subject: subject,
 		Html:    htmlBody,
 	}
