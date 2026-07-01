@@ -2,12 +2,14 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Antonio-Jacal/papeleria-backend.git/models"
+	"github.com/resend/resend-go/v3"
 )
 
 func SendHTMLEmail(to []string, subject string, htmlBody string) error {
@@ -33,6 +35,25 @@ func SendHTMLEmail(to []string, subject string, htmlBody string) error {
 		return fmt.Errorf("error al enviar correo: %w", err)
 	}
 
+	return nil
+}
+
+func SendHTMLEmailResend(to []string, subject string, htmlBody string) error {
+	API_KEY_RESEND := os.Getenv("RESEND_API_KEY")
+	client := resend.NewClient(API_KEY_RESEND)
+
+	params := &resend.SendEmailRequest{
+		From:    "onboarding@resend.dev",
+		To:      to,
+		Subject: subject,
+		Html:    htmlBody,
+	}
+	sent, err := client.Emails.Send(params)
+	if err != nil {
+		log.Fatalf("failed to send email: %v", err)
+	}
+
+	log.Printf("email sent: %s", sent.Id)
 	return nil
 }
 
