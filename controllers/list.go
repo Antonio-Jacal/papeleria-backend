@@ -172,7 +172,13 @@ func RegisterList(c *gin.Context) {
 
 		err = utils.SendHTMLEmail(to, subject, html)
 		if err != nil {
-			log.Fatal("Fallo al enviar correo:", err)
+			log.Printf("Fallo al enviar correo: %v", err)
+
+			c.JSON(http.StatusOK, gin.H{
+				"mensaje":       "Lista registrada correctamente",
+				"correoEnviado": false,
+			})
+			return
 		}
 
 		log.Println("Correo enviado exitosamente.")
