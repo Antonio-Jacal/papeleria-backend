@@ -81,7 +81,7 @@ func Register(c *gin.Context) {
 `, input.Nombre, input.Password)
 
 	go func() {
-		err := utils.SendHTMLEmail([]string{input.Email}, "🎒 Bienvenido a la plataforma de papelería Nina's", htmlBody)
+		err := utils.SendHTMLEmailResend([]string{input.Email}, "🎒 Bienvenido a la plataforma de papelería Nina's", htmlBody)
 		if err != nil {
 			log.Printf("Error al enviar correo de bienvenida a %s: %v", input.Email, err)
 		}
