@@ -43,7 +43,7 @@ func SendHTMLEmailResend(to []string, subject string, htmlBody string) error {
 	client := resend.NewClient(API_KEY_RESEND)
 
 	params := &resend.SendEmailRequest{
-		From:    "noreply@papelerianinas.com",
+		From:    "papelerianinasnoreply@papelerianinas.com",
 		To:      to,
 		Subject: subject,
 		Html:    htmlBody,
