@@ -92,12 +92,18 @@ func RegisterList(c *gin.Context) {
 
 	// Generar número de lista
 	collection := config.GetCollection("pedidos")
+	fmt.Println("1")
 	numero, err := utils.GenerateNextNumeroLista(collection)
+	fmt.Println("2")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"Error": "Error generando número de lista"})
+		fmt.Println("ERROR:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"Error": err.Error(),
+		})
 		return
 	}
 	lista.NumeroLista = numero
+	fmt.Println("2.5")
 
 	// Insertar en MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -106,6 +112,7 @@ func RegisterList(c *gin.Context) {
 	//fmt.Println(lista)
 
 	_, err = collection.InsertOne(ctx, lista)
+	fmt.Println("3")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Error": "Ocurrio un error, no es posible guardar el documento"})
 		return
@@ -193,8 +200,10 @@ func RegisterList(c *gin.Context) {
 				return
 			}
 		*/
+		fmt.Println("4")
 		utils.SendHTMLEmailResend(to, subject, html)
 		log.Println("Correo enviado exitosamente.")
+		fmt.Println("5")
 		c.JSON(http.StatusOK, gin.H{"Lista confirmada, correo enviado a": lista.Correo})
 		return
 	}
