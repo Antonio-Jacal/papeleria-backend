@@ -134,6 +134,11 @@ func RegisterList(c *gin.Context) {
 			        <li><strong>Fecha de creación:</strong> %s</li>
 			        <li><strong>Fecha estimada de entrega:</strong> %s</li>
 			        <li><strong>Etiquetas:</strong> %s</li>
+					<li><strong>Tipografía:</strong> %d</li>
+					<li><strong>Marco:</strong> %s</li>
+					<li><strong>Patrón:</strong> %d</li>
+					<li><strong>Acomodo:</strong> %d</li>
+					<li><strong>Número de paquete:</strong> %d</li>
 			      </ul>
 
 			      <p><strong>Productos solicitados:</strong></p>
@@ -165,6 +170,11 @@ func RegisterList(c *gin.Context) {
 			utils.FormatDate(lista.FechaCreacion),
 			utils.FormatDate(lista.FechaEntregaEsperada),
 			lista.EtiquetasPersonaje,
+			lista.Tipografia,
+			lista.Marco,
+			lista.Patron,
+			lista.Acomodo,
+			lista.NumPaquete,
 			utils.BuildProductosHTML(lista.Productos),
 			utils.BuildUtilesQuitadosHTML(lista.UtilesQuitados),
 			lista.TotalGeneral,
