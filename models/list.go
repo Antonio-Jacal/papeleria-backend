@@ -24,6 +24,11 @@ type List struct {
 	DeseaQuitar          bool                       `json:"deseaQuitar,omitempty" bson:"deseaQuitar"`
 	Faltantes            map[string]int             `json:"faltantes,omitempty" bson:"faltantes,omitempty"`
 	ListaForrada         bool                       `json:"listaForrada,omitempty" bson:"listaForrada"`
+	Tipografia           int                        `json:"tipografia,omitempty" bson:"tipografia,omitempty"`
+	Marco                string                     `json:"marco,omitempty" bson:"marco,omitempty"`
+	Patron               int                        `json:"patron,omitempty" bson:"patron,omitempty"`
+	Acomodo              int                        `json:"acomodo,omitempty" bson:"acomodo,omitempty"`
+	NumPaquete           int                        `json:"numPaquete,omitempty" bson:"numPaquete,omitempty"`
 	EtiquetasPersonaje   string                     `json:"etiquetasPersonaje,omitempty" bson:"etiquetasPersonaje,omitempty"`
 	StatusEtiquetas      string                     `json:"statusEtiquetas,omitempty" bson:"statusEtiquetas,omitempty"` // corregí tag (mayúscula y typo "Somitempty")
 	EtiquetasGrandes     bool                       `json:"etiquetasGrandes,omitempty" bson:"etiquetasGrandes"`
