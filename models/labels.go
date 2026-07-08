@@ -17,6 +17,11 @@ type LabelResumen struct {
 	EtiquetasGrandes     bool               `bson:"etiquetasGrandes"`
 	EtiquetasMedianas    bool               `bson:"etiquetasMedianas"`
 	EtiquetasChicas      bool               `bson:"etiquetasChicas"`
+	NumPaquete           int                `bson:"numPaquete"`
+	Tipografia           int                `bson:"tipografia"`
+	Marco                string             `bson:"marco"`
+	Patron               int                `bson:"patron"`
+	Acomodo              int                `bson:"acomodo"`
 	EncargadoEtiquetasId string             `bson:"encargadoEtiquetasId"`
 	StatusForrado        string             `bson:"statusForrado"`
 }
