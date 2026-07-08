@@ -288,6 +288,11 @@ func getProjection() bson.M {
 		"etiquetasGrandes":     1,
 		"etiquetasMedianas":    1,
 		"etiquetasChicas":      1,
+		"numPaquete":           1,
+		"tipografia":           1,
+		"marco":                1,
+		"patron":               1,
+		"acomodo":              1,
 		"encargadoEtiquetasId": 1,
 		"statusForrado":        1,
 	}
