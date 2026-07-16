@@ -272,7 +272,7 @@ func GetListWithFilters(c *gin.Context) {
 				switch key {
 				case "nombreTutor", "nombreAlumno":
 					mustFilters = append(mustFilters, BuildAutocompleteFilter(key, value))
-				case "numeroLista", "statusLista", "statusForrado":
+				case "numeroLista", "statusLista", "statusForrado", "statusEtiquetas":
 					mustFilters = append(mustFilters, BuildStringFilter(key, value))
 				case "grado":
 					mustFilters = append(mustFilters, bson.M{
