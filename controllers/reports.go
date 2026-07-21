@@ -282,6 +282,7 @@ func getProjection() bson.M {
 		"numeroLista":          1,
 		"nombreAlumno":         1,
 		"grado":                1,
+		"comentarios":          1,
 		"fechaEntregaEsperada": 1,
 		"etiquetasPersonaje":   1,
 		"statusEtiquetas":      1,
