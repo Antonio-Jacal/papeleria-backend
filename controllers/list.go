@@ -282,7 +282,6 @@ func GetListWithFilters(c *gin.Context) {
 							//"fuzzy": bson.M{"maxEdits": 0},
 						},
 					})
-
 				}
 			}
 		}
