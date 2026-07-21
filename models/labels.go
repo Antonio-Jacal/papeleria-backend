@@ -11,6 +11,7 @@ type LabelResumen struct {
 	NumeroLista          string             `bson:"numeroLista"`
 	NombreAlumno         string             `bson:"nombreAlumno"`
 	Grado                string             `bson:"grado"`
+	Comentarios          string             `bson:"comentarios"`
 	FechaEntregaEsperada *time.Time         `bson:"fechaEntregaEsperada"`
 	EtiquetasPersonaje   string             `bson:"etiquetasPersonaje"`
 	StatusEtiquetas      string             `bson:"statusEtiquetas"`
